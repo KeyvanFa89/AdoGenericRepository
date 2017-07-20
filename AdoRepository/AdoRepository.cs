@@ -34,7 +34,7 @@ namespace AdoGenericRepository
         {
             return null;
         }
-        protected async Task<IEnumerable<T>> GetRecordsAsync(string tSql, SqlParameter[] sqlParameteres)
+        protected async Task<IEnumerable<T>> GetRecordsAsync(string tSql,params SqlParameter[] sqlParameteres)
         {
             var list = new List<T>();
 
@@ -68,7 +68,7 @@ namespace AdoGenericRepository
             }
             return list;
         }
-        protected async Task<T> GetRecordAsync(string tSql, SqlParameter[] sqlParameteres)
+        protected async Task<T> GetRecordAsync(string tSql,params SqlParameter[] sqlParameteres)
         {
             T record = null;
 
@@ -105,7 +105,7 @@ namespace AdoGenericRepository
             }
             return record;
         }
-        public async Task<object> ExcecuteCommandAsync(string cmd,CommandResults resultType,SqlParameter[] sqlParameters)
+        public async Task<object> ExcecuteCommandAsync(string cmd,CommandResults resultType,params SqlParameter[] sqlParameters)
         {
             _command.Connection = _connection;
             _command.CommandText = cmd;

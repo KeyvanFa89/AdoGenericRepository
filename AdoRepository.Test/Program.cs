@@ -10,6 +10,10 @@ namespace AdoRepository.Test
     {
         static void Main(string[] args)
         {
+            DAL.PersonStore personStore = new DAL.PersonStore();
+            var person = personStore.GetAsync(4).Result;
+            Console.WriteLine($"{person.Id} - {person.FirstName} - {person.LastName}");
+            Console.ReadKey();
         }
     }
 }

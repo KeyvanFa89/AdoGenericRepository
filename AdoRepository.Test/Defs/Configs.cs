@@ -4,7 +4,14 @@
     {
         public static string ConnectionString
         {
-            get { return System.Configuration.ConfigurationManager.ConnectionStrings[0].ConnectionString; }
+            get
+            {
+                return System
+                    .Configuration
+                    .ConfigurationManager
+                    .ConnectionStrings["SchoolConnectionString"]
+                    .ConnectionString;
+            }
         }
     }
 }

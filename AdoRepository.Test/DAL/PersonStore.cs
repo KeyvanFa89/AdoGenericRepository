@@ -22,6 +22,8 @@ namespace AdoRepository.Test.DAL
 
         }
 
+        private const string Table = "Persons";
+
         public override Person MapToModel(SqlDataReader reader)
         {
             return new Person
@@ -36,13 +38,12 @@ namespace AdoRepository.Test.DAL
         {
             try
             {
-                string tSql = "SELECT * FROM Persons WHERE Id = @Id";
+                string tSql = $"SELECT * FROM {Table} WHERE Id = @Id";
                 Person p = await this.GetRecordAsync(tSql, new SqlParameter("Id", id));
                 return p;
             }
             catch (Exception ex)
             {
-
                 throw ex;
             }
         }

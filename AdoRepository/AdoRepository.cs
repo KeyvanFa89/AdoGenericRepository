@@ -16,11 +16,13 @@ namespace AdoGenericRepository
         #endregion
 
         #region ctors
+
         public AdoRepository(string connectionString)
         {
             _connection = new SqlConnection(connectionString);
             _command = new SqlCommand();
         }
+
         #endregion
 
         public virtual T MapToModel(SqlDataReader reader)
@@ -102,7 +104,7 @@ namespace AdoGenericRepository
             }
             return record;
         }
-        public async Task<object> ExcecuteCommand(string cmd,SqlParameter[] sqlParameters)
+        public async Task<object> ExcecuteCommandAsync(string cmd,SqlParameter[] sqlParameters)
         {
             _command.Connection = _connection;
             _command.CommandText = cmd;

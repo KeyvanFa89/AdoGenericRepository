@@ -6,6 +6,11 @@ using System.Threading.Tasks;
 
 namespace AdoGenericRepository
 {
+    public enum CommandResults
+    {
+        AffectedRows = 1,
+        ReturnValue  = 2
+    }
     public abstract class AdoRepository<T> where T : class
     {
         #region Fields
@@ -104,7 +109,7 @@ namespace AdoGenericRepository
             }
             return record;
         }
-        public async Task<object> ExcecuteCommandAsync(string cmd,SqlParameter[] sqlParameters)
+        public async Task<object> ExcecuteCommandAsync(string cmd,CommandResults resultType,SqlParameter[] sqlParameters)
         {
             _command.Connection = _connection;
             _command.CommandText = cmd;
@@ -114,7 +119,15 @@ namespace AdoGenericRepository
 
             try
             {
-                return await _command.ExecuteScalarAsync();
+                switch (resultType)
+                {
+                    case CommandResults.AffectedRows:
+                        return await _command.ExecuteNonQueryAsync();
+                        
+                    case CommandResults.ReturnValue:
+                        return await _command.ExecuteScalarAsync();
+                }
+                return null;
             }
             catch (Exception ex)
             {

@@ -17,7 +17,6 @@ namespace AdoGenericRepository
 
         private SqlConnection _connection;
         private SqlCommand _command;
-
         #endregion
 
         #region ctors
@@ -30,10 +29,10 @@ namespace AdoGenericRepository
 
         #endregion
 
-        public virtual T MapToModel(SqlDataReader reader)
-        {
-            return null;
-        }
+        #region MustImplement
+        public abstract T MapToModel(SqlDataReader reader);
+
+        #endregion
         protected async Task<IEnumerable<T>> GetRecordsAsync(string tSql,params SqlParameter[] sqlParameteres)
         {
             var list = new List<T>();

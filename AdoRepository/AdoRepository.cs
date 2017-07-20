@@ -33,6 +33,11 @@ namespace AdoGenericRepository
         public abstract T MapToModel(SqlDataReader reader);
 
         #endregion
+
+        protected SqlParameter CreateSqlParamter<K>(string name,K value)
+        {
+            return new SqlParameter(name, (object)value ?? DBNull.Value);
+        }
         protected async Task<IEnumerable<T>> GetRecordsAsync(string tSql,params SqlParameter[] sqlParameteres)
         {
             var list = new List<T>();
@@ -104,7 +109,7 @@ namespace AdoGenericRepository
             }
             return record;
         }
-        public async Task<object> ExcecuteCommandAsync(string cmd,CommandResults resultType,params SqlParameter[] sqlParameters)
+        public async Task<dynamic> ExcecuteCommandAsync(string cmd,CommandResults resultType,params SqlParameter[] sqlParameters)
         {
             _command.Connection = _connection;
             _command.CommandText = cmd;
@@ -114,6 +119,7 @@ namespace AdoGenericRepository
 
             try
             {
+                _connection.Open();
                 switch (resultType)
                 {
                     case CommandResults.AffectedRows:
@@ -127,6 +133,10 @@ namespace AdoGenericRepository
             catch (Exception ex)
             {
                 throw ex;
+            }
+            finally
+            {
+                _connection.Close();
             }
         }
 

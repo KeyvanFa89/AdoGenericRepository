@@ -5,12 +5,13 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Data.SqlClient;
+using AdoGenericRepository;
 
 namespace AdoRepository.Test.DAL
 {
     public class PersonStore : AdoGenericRepository.AdoRepository<Person>
     {
-        public PersonStore(string connectionString) 
+        public PersonStore(string connectionString)
             : base(connectionString)
         {
 
@@ -44,6 +45,31 @@ namespace AdoRepository.Test.DAL
             }
             catch (Exception ex)
             {
+                throw ex;
+            }
+        }
+        public async Task<int> AddAsync(Person person)
+        {
+            try
+            {
+                string insertCommand =
+                    @"INSERT INTO [School].[dbo].[Persons]([FirstName],[LastName],[Height])
+                    OUTPUT inserted.Id
+                    VALUES(@FirstName, @LastName, @Height)";
+
+                SqlParameter[] parameters =
+                {
+                    CreateSqlParamter("FirstName",person.FirstName),
+                    CreateSqlParamter("LastName",person.LastName),
+                    CreateSqlParamter("Height",person.Height)
+                };
+
+                return await this.ExcecuteCommandAsync
+                    (insertCommand, CommandResults.ReturnValue, parameters);
+            }
+            catch (Exception ex)
+            {
+
                 throw ex;
             }
         }

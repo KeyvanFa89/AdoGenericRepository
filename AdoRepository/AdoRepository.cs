@@ -34,10 +34,6 @@ namespace AdoGenericRepository
         {
             return null;
         }
-        public virtual  SqlParameter[] MapToSqlParameters<T>(T model)
-        {
-            return null;
-        }
         protected async Task<IEnumerable<T>> GetRecordsAsync(string tSql, SqlParameter[] sqlParameteres)
         {
             var list = new List<T>();

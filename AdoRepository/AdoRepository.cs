@@ -9,7 +9,7 @@ namespace AdoGenericRepository
     public enum CommandResults
     {
         AffectedRows = 1,
-        ReturnValue  = 2
+        ReturnValue = 2
     }
     public abstract class AdoRepository<T> where T : class
     {
@@ -17,14 +17,14 @@ namespace AdoGenericRepository
 
         private SqlConnection _connection;
         private SqlCommand _command;
+        private readonly string _connectionString;
         #endregion
 
         #region ctors
 
         public AdoRepository(string connectionString)
         {
-            _connection = new SqlConnection(connectionString);
-            _command = new SqlCommand();
+            _connectionString = connectionString;
         }
 
         #endregion
@@ -32,72 +32,44 @@ namespace AdoGenericRepository
         #region MustImplement
         public abstract T MapToModel(SqlDataReader reader);
 
+        public abstract SqlParameter[] CreateInsertSqlParameters(T entity);
+        public abstract SqlParameter[] CreateUpdateSqlParameters(T entity);
+        public abstract SqlParameter CreateSelectByIdParameter<K>(K id);
+
+        public abstract string GetInsertCommand();
+        public abstract string GetUpdateCommand();
+        public abstract string GetSelectByIdCommand();
+        public abstract string GetSelectAllCommand();
         #endregion
 
-        protected SqlParameter CreateSqlParamter<K>(string name,K value)
+        #region Implemented
+        protected SqlParameter CreateSqlParamter<K>(string name, K value)
         {
             return new SqlParameter(name, (object)value ?? DBNull.Value);
         }
-        protected async Task<IEnumerable<T>> GetRecordsAsync(string tSql,params SqlParameter[] sqlParameteres)
+        #endregion
+
+        #region CRUD_Operations
+
+        public async Task<object> Insert(T entity)
         {
-            var list = new List<T>();
-
-            _command.Connection = _connection;
-            _command.CommandText = tSql;
-
-            if (sqlParameteres != null && sqlParameteres.Count() > 0)
-                _command.Parameters.AddRange(sqlParameteres);
+            object res;
 
             try
             {
-                _connection.Open();
-                var reader = await _command.ExecuteReaderAsync();
-                try
+                using (_connection = new SqlConnection())
                 {
-                    while (await reader.ReadAsync())
-                        list.Add(MapToModel(reader));
-                }
-                finally
-                {
-                    reader.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                _connection.Close();
-            }
-            return list;
-        }
-        protected async Task<T> GetRecordAsync(string tSql,params SqlParameter[] sqlParameteres)
-        {
-            T record = null;
-
-            _command.Connection = _connection;
-            _command.CommandText = tSql;
-
-            if (sqlParameteres != null && sqlParameteres.Count() > 0)
-                _command.Parameters.AddRange(sqlParameteres);
-
-            try
-            {
-                _connection.Open();
-                var reader = await _command.ExecuteReaderAsync();
-                try
-                {
-                    while (await reader.ReadAsync())
+                    _connection.Open();
+                    using (_command = new SqlCommand(GetInsertCommand(), _connection))
                     {
-                        record = MapToModel(reader);
-                        break;
+                        _command.CommandType = System.Data.CommandType.Text;
+                        _command.Parameters.AddRange(CreateInsertSqlParameters(entity));
+
+                        res = await _command.ExecuteScalarAsync();
                     }
                 }
-                finally
-                {
-                    reader.Close();
-                }
+
+                return res;
             }
             catch (Exception ex)
             {
@@ -106,39 +78,110 @@ namespace AdoGenericRepository
             finally
             {
                 _connection.Close();
+                _command.Dispose();
             }
-            return record;
         }
-        public async Task<dynamic> ExcecuteCommandAsync(string cmd,CommandResults resultType,params SqlParameter[] sqlParameters)
-        {
-            _command.Connection = _connection;
-            _command.CommandText = cmd;
 
-            if (sqlParameters != null && sqlParameters.Count() > 0)
-                _command.Parameters.AddRange(sqlParameters);
+        public async Task<int> Update(T entity)
+        {
+            int rowsAffected = 0;
 
             try
             {
-                _connection.Open();
-                switch (resultType)
+                using (_connection = new SqlConnection())
                 {
-                    case CommandResults.AffectedRows:
-                        return await _command.ExecuteNonQueryAsync();
-                        
-                    case CommandResults.ReturnValue:
-                        return await _command.ExecuteScalarAsync();
+                    _connection.Open();
+                    using (_command = new SqlCommand(GetUpdateCommand(), _connection))
+                    {
+                        _command.CommandType = System.Data.CommandType.Text;
+                        _command.Parameters.AddRange(CreateUpdateSqlParameters(entity));
+
+                        rowsAffected = await _command.ExecuteNonQueryAsync();
+                    }
+                }
+
+                return rowsAffected;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+            finally
+            {
+                _connection.Close();
+                _command.Dispose();
+            }
+        }
+
+        public async Task<T> GetById<K>(K id)
+        {
+            try
+            {
+                using (_connection = new SqlConnection(_connectionString))
+                {
+                    _connection.Open();
+                    using (_command = new SqlCommand(GetSelectByIdCommand(), _connection))
+                    {
+                        _command.Parameters.Add(CreateSelectByIdParameter(id));
+                        _command.CommandType = System.Data.CommandType.Text;
+
+                        var reader = await _command.ExecuteReaderAsync();
+
+                        if (reader.HasRows)
+                            while (await reader.ReadAsync())
+                                return MapToModel(reader);
+                    }
                 }
                 return null;
             }
             catch (Exception ex)
             {
+
                 throw ex;
             }
             finally
             {
                 _connection.Close();
+                _command.Dispose();
             }
         }
+
+        public async Task<List<T>> GetAll()
+        {
+            List<T> lstEntities = new List<T>();
+
+            try
+            {
+                using (_connection = new SqlConnection(_connectionString))
+                {
+                    _connection.Open();
+                    using (_command = new SqlCommand(GetSelectAllCommand(), _connection))
+                    {
+                        _command.CommandType = System.Data.CommandType.Text;
+
+                        var reader = await _command.ExecuteReaderAsync();
+
+                        if (reader.HasRows)
+                            while (reader.Read())
+                                lstEntities.Add(MapToModel(reader));
+
+                        return lstEntities;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+            finally
+            {
+                _connection.Close();
+                _command.Dispose();
+            }
+        }
+
+        #endregion
 
     }
 

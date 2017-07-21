@@ -42,7 +42,6 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="DAL\PersonStore.cs" />
     <Compile Include="Defs\Configs.cs" />
     <Compile Include="Entities\Person.cs" />
     <Compile Include="Program.cs" />
@@ -56,6 +55,9 @@
       <Project>{ba9a21f0-edf7-493d-937f-bc5e7a9ef238}</Project>
       <Name>AdoGenericRepository</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="DAL\" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

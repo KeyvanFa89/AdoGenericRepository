@@ -11,28 +11,45 @@ namespace AdoRepository.Test
     {
         static void Main(string[] args)
         {
-            insert();
+            select();
         }
 
 
         static void select()
         {
             DAL.PersonStore personStore = new DAL.PersonStore();
-            var person = personStore.GetAsync(4).Result;
-            Console.WriteLine($"{person.Id} - {person.FirstName} - {person.LastName}");
-            Console.ReadKey();
+            var person = personStore.GetById(13).Result;
+            Console.WriteLine(person.FirstName);
+            Console.ReadLine();
         }
 
-        static void insert()
+        static async void insert()
         {
             DAL.PersonStore personStore = new DAL.PersonStore();
             var person = new Person
             {
                 FirstName = "آرمین",
-     
+                LastName  = "سامانی",
+                Height = 168,
+                Id = 2
             };
-            var res = personStore.AddAsync(person);
-            Console.WriteLine(res.Result);
+            var res = await personStore.Insert(person);
+            Console.WriteLine((int)res);
+            Console.ReadKey();
+        }
+
+        static async void update()
+        {
+            DAL.PersonStore personStore = new DAL.PersonStore();
+            var person = new Person
+            {
+                FirstName = "آرمین",
+                LastName = "آقا سامانی",
+                Height = 168,
+                Id = 14
+            };
+            var res = await personStore.Update(person);
+            Console.WriteLine((int)res);
             Console.ReadKey();
         }
     }

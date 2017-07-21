@@ -30,16 +30,15 @@ namespace AdoGenericRepository
         #endregion
 
         #region MustImplement
-        public abstract T MapToModel(SqlDataReader reader);
+        protected abstract T MapToModel(SqlDataReader reader);
 
-        public abstract SqlParameter[] CreateInsertSqlParameters(T entity);
-        public abstract SqlParameter[] CreateUpdateSqlParameters(T entity);
-        public abstract SqlParameter CreateSelectByIdParameter<K>(K id);
+        protected abstract SqlParameter[] MapToSqlParameters(T entity);
+        protected abstract SqlParameter CreateSelectByIdParameter<K>(K id);
 
-        public abstract string GetInsertCommand();
-        public abstract string GetUpdateCommand();
-        public abstract string GetSelectByIdCommand();
-        public abstract string GetSelectAllCommand();
+        protected abstract string GetInsertCommand();
+        protected abstract string GetUpdateCommand();
+        protected abstract string GetSelectByIdCommand();
+        protected abstract string GetSelectAllCommand();
         #endregion
 
         #region Implemented
@@ -47,7 +46,10 @@ namespace AdoGenericRepository
         {
             return new SqlParameter(name, (object)value ?? DBNull.Value);
         }
-
+        protected dynamic IsDBNull(SqlDataReader reader, string fieldName, object defaultValue)
+        {
+            return reader[fieldName] == DBNull.Value ? defaultValue : (dynamic)reader[fieldName];
+        }
         protected async Task<List<T>> Query(string tSql,params SqlParameter[] sqlParameters)
         {
             List<T> lstEntities = new List<T>();
@@ -123,19 +125,19 @@ namespace AdoGenericRepository
 
         #region CRUD_Operations_Depend_On_Implement_All_Abstract_Methods
 
-        protected async Task<object> Insert(T entity)
+        public async Task<object> Insert(T entity)
         {
             object res;
 
             try
             {
-                using (_connection = new SqlConnection())
+                using (_connection = new SqlConnection(_connectionString))
                 {
                     _connection.Open();
                     using (_command = new SqlCommand(GetInsertCommand(), _connection))
                     {
                         _command.CommandType = System.Data.CommandType.Text;
-                        _command.Parameters.AddRange(CreateInsertSqlParameters(entity));
+                        _command.Parameters.AddRange(MapToSqlParameters(entity));
 
                         res = await _command.ExecuteScalarAsync();
                     }
@@ -154,19 +156,19 @@ namespace AdoGenericRepository
             }
         }
 
-        protected async Task<int> Update(T entity)
+        public async Task<int> Update(T entity)
         {
             int rowsAffected = 0;
 
             try
             {
-                using (_connection = new SqlConnection())
+                using (_connection = new SqlConnection(_connectionString))
                 {
                     _connection.Open();
                     using (_command = new SqlCommand(GetUpdateCommand(), _connection))
                     {
                         _command.CommandType = System.Data.CommandType.Text;
-                        _command.Parameters.AddRange(CreateUpdateSqlParameters(entity));
+                        _command.Parameters.AddRange(MapToSqlParameters(entity));
 
                         rowsAffected = await _command.ExecuteNonQueryAsync();
                     }
@@ -185,7 +187,7 @@ namespace AdoGenericRepository
             }
         }
 
-        protected async Task<T> GetById<K>(K id)
+        public async Task<T> GetById<K>(K id)
         {
             try
             {
@@ -218,7 +220,7 @@ namespace AdoGenericRepository
             }
         }
 
-        protected async Task<List<T>> GetAll()
+        public async Task<List<T>> GetAll()
         {
             List<T> lstEntities = new List<T>();
 

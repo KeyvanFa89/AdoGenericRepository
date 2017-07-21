@@ -47,11 +47,83 @@ namespace AdoGenericRepository
         {
             return new SqlParameter(name, (object)value ?? DBNull.Value);
         }
+
+        protected async Task<List<T>> Query(string tSql,params SqlParameter[] sqlParameters)
+        {
+            List<T> lstEntities = new List<T>();
+
+            try
+            {
+                using (_connection = new SqlConnection(_connectionString))
+                {
+                    _connection.Open();
+                    using (_command = new SqlCommand(tSql, _connection))
+                    {
+                        _command.CommandType = System.Data.CommandType.Text;
+
+                        if (sqlParameters != null && sqlParameters.Count() > 0)
+                            _command.Parameters.AddRange(sqlParameters);
+
+                        var reader = await _command.ExecuteReaderAsync();
+                        if (reader.HasRows)
+                            while (await reader.ReadAsync())
+                                lstEntities.Add(MapToModel(reader));
+                    }
+                }
+
+                return lstEntities;
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+            finally
+            {
+                _connection.Close();
+                _command.Dispose();
+            }
+        }
+        protected async Task<int> ExexuteCommand(string command,params SqlParameter[] sqlParameters)
+        {
+            int rowsAffected = 0;
+
+            try
+            {
+                using (_connection = new SqlConnection(_connectionString))
+                {
+                    _connection.Open();
+                    using (_command = new SqlCommand(command, _connection))
+                    {
+                        _command.CommandType = System.Data.CommandType.Text;
+
+                        if (sqlParameters != null && sqlParameters.Count() > 0)
+                            _command.Parameters.AddRange(sqlParameters);
+
+                        rowsAffected = await _command.ExecuteNonQueryAsync();
+                        
+                    }
+                }
+
+                return rowsAffected;
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+            finally
+            {
+                _connection.Close();
+                _command.Dispose();
+            }
+        }
+
         #endregion
 
-        #region CRUD_Operations
+        #region CRUD_Operations_Depend_On_Implement_All_Abstract_Methods
 
-        public async Task<object> Insert(T entity)
+        protected async Task<object> Insert(T entity)
         {
             object res;
 
@@ -82,7 +154,7 @@ namespace AdoGenericRepository
             }
         }
 
-        public async Task<int> Update(T entity)
+        protected async Task<int> Update(T entity)
         {
             int rowsAffected = 0;
 
@@ -113,7 +185,7 @@ namespace AdoGenericRepository
             }
         }
 
-        public async Task<T> GetById<K>(K id)
+        protected async Task<T> GetById<K>(K id)
         {
             try
             {
@@ -146,7 +218,7 @@ namespace AdoGenericRepository
             }
         }
 
-        public async Task<List<T>> GetAll()
+        protected async Task<List<T>> GetAll()
         {
             List<T> lstEntities = new List<T>();
 
